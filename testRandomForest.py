@@ -35,7 +35,9 @@ def validation(clf,X,y):
 (names1,X1,y1)=importData("D:\\Documents\\Centrale\\Ei2\\PGROU\\data.csv")
 (names2,X2,y2)=importData("D:\\Documents\\Centrale\\Ei2\\PGROU\\test.csv")
 
-
+print(names1)
+print(X1)
+print(y1)
 
 
 p1=[]

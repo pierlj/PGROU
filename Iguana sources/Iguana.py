@@ -12,6 +12,10 @@ from PyQt5 import QtWidgets
 from py2cytoscape.data.cyrest_client import CyRestClient
 import psutil
 import networkx as nx
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import confusion_matrix
+import numpy
 
 
 #import du fichier génrant l'interface graphique
@@ -29,6 +33,18 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     grapheLoc=[]
     grapheLoc2=[]
     table=[]
+    
+    dataTraining=""
+    dataTest=[]
+    
+    trainFeatures=[]
+    trainLabels=[]
+    
+    testFeatures=[]
+    testLabels=[]
+    
+    clf=None
+    
     
     def __init__(self):
         super(Pappl, self).__init__()
@@ -51,6 +67,12 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         # self.color_1.setEnabled(False)
         self.nCompo.clicked.connect(self.nComposantesAux)
         # self.nCompo.setEnabled(False)"
+        self.train.clicked.connect(self.training)
+        self.train.setEnabled(False)
+        self.chercheFichier.clicked.connect(self.loadingDataTrain)
+        self.test.clicked.connect(self.testData)
+        self.test.setEnabled(False)
+        self.pushButton.clicked.connect(self.loadingDataTest)
         
     #ouverture d'une fenetre d'erreur lorsque cytoscape n'est pas lancé    
     def alerte(a):
@@ -201,6 +223,78 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     #Il faudrait proposer une option dans l'application pour donner le chemin d'accès de cytoscape et le changer ici. 
     def lancement(self):
         os.startfile(r'C:\Program Files\Cytoscape_v3.5.1\Cytoscape.exe')
+    
+    
+    
+
+    def training(self):
+        self.clf = RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy')
+        
+        self.clf.fit(self.trainFeatures,self.trainLabels)
+        self.test.setEnabled(True)
+        
+    def testData(self):
+        path=self.dataTest[self.listWidget.currentRow()]
+        (features,labels)=self.importData(path)
+        (p,matrix)=self.validation(features,labels)
+        self.precision.setText(str('{:01.2f}'.format(p)))
+        self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
+        
+    def validation(self,X,y):
+        #print("Prediction:")
+        pred=self.clf.predict(X)
+        confusionMatrix=confusion_matrix(pred,y)
+        #print(confusionMatrix)
+        precision=sum(numpy.diagonal(confusionMatrix))/sum(sum(confusionMatrix))
+        return (precision,confusionMatrix) 
+        
+        
+        
+    def loadingDataTrain(self):
+        print("loadTrain")
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        if (len(nom[0])>0):
+            
+            self.dataTrain=nom[0]
+            self.nomFichier.setText(nom[0])
+            self.train.setEnabled(True)
+            
+        (self.trainFeatures,self.trainLabels)=self.importData(self.dataTrain)
+    
+    def importData(self,chemin):
+        path=chemin.replace('\\','\\\\')
+        print(chemin)
+        file=open(chemin,'r')
+        data=file.readlines()
+        names=[]
+        X=[]
+        y=[]
+        for i in data:
+            tab=i.split(" ")
+            names.append(tab[0])
+            X.append(tab[1:-1])
+            y.append(tab[-1][:-1])
+        
+        for i in range (len(X)):
+            for j in range (len (X[i])):
+                X[i][j]=float(X[i][j])
+        file.close()
+        return(X,y)
+            
+            
+            
+    def loadingDataTest(self):
+        print("loadTest")
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        if (len(nom[0])>0):
+            self.dataTest.append(nom[0])
+            
+            self.listWidget.addItem(os.path.basename(str(nom[0])))
+            self.test.setEnabled(True)
+            
+            
+
+    
     
     #affichage du graphe selectionné dans cytoscape
     def affichage(self):
