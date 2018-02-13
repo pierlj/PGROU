@@ -1,6 +1,8 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import confusion_matrix
 import numpy
+import matplotlib.pyplot as plt
 
 def importData(chemin):
     file=open(chemin,'r')
@@ -21,12 +23,12 @@ def importData(chemin):
     return(names,X,y)
 
 def validation(clf,X,y):
-    print("Prediction:")
+    #print("Prediction:")
     pred=clf.predict(X)
     confusionMatrix=confusion_matrix(pred,y)
-    print(confusionMatrix)
+    #print(confusionMatrix)
     precision=sum(numpy.diagonal(confusionMatrix))/sum(sum(confusionMatrix))
-    print(precision)
+    return precision
     
 
 
@@ -34,14 +36,25 @@ def validation(clf,X,y):
 (names2,X2,y2)=importData("D:\\Documents\\Centrale\\Ei2\\PGROU\\test.csv")
 
 
-clf1 = RandomForestClassifier(n_estimators=len(X1))
-clf1.fit(X1, y1)
 
-clf2 = RandomForestClassifier(n_estimators=len(X2))
-clf2.fit(X2, y2)
 
-validation(clf1,X2,y2)
-validation(clf2,X1,y1)
+p1=[]
+p2=[]
+x=numpy.array([i for i in range(1,10)])
 
+
+for i in range(90,100):
+    clf1 = RandomForestClassifier(n_estimators=i,criterion='entropy',max_features='log2')
+    clf1.fit(X1, y1)
+    clf2 = RandomForestClassifier(n_estimators=i,criterion='entropy')
+    clf2.fit(X2, y2)
+    p1.append(validation(clf1,X2,y2))
+    p2.append(validation(clf2,X1,y1))
+
+plt.plot(p1)
+print(numpy.mean(p1))
+plt.plot(p2)
+print(numpy.mean(p2))
+plt.show()
 
 
