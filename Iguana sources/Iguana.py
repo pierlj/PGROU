@@ -13,7 +13,6 @@ from py2cytoscape.data.cyrest_client import CyRestClient
 import psutil
 import networkx as nx
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import confusion_matrix
 import numpy
 
