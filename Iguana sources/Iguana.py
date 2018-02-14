@@ -256,7 +256,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         if (len(nom[0])>0):
             
             self.dataTrain=nom[0]
-            self.nomFichier.setText(nom[0])
+            self.nomFichier.clear()
+            self.nomFichier.addItem(str(nom[0]))
             self.train.setEnabled(True)
             
         (self.trainFeatures,self.trainLabels)=self.importData(self.dataTrain)
