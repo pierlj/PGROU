@@ -42,7 +42,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     testFeatures=[]
     testLabels=[]
     
-    clf=None
+    clf=[]
     
     
     def __init__(self):
@@ -227,21 +227,24 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
 
     def training(self):
-        self.clf = RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy')
-        
-        self.clf.fit(self.trainFeatures,self.trainLabels)
+        self.clf.append(RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy'))
+        if (not self.test.isEnabled()):
+            self.comboBox.clear()
+        self.clf[-1].fit(self.trainFeatures,self.trainLabels)
+        self.comboBox.addItem("Classificateur "+str(len(self.clf)))
         self.test.setEnabled(True)
         
     def testData(self):
         path=self.dataTest[self.listWidget.currentRow()]
         (features,labels)=self.importData(path)
         (p,matrix)=self.validation(features,labels)
+        self.fichier.setText(os.path.basename(path))
         self.precision.setText(str('{:01.2f}'.format(p)))
         self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
         
     def validation(self,X,y):
         #print("Prediction:")
-        pred=self.clf.predict(X)
+        pred=self.clf[self.comboBox.currentIndex()].predict(X)
         confusionMatrix=confusion_matrix(pred,y)
         #print(confusionMatrix)
         precision=sum(numpy.diagonal(confusionMatrix))/sum(sum(confusionMatrix))
