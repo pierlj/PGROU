@@ -15,7 +15,6 @@ import networkx as nx
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
 import numpy
-import re
 
 
 #import du fichier génrant l'interface graphique
@@ -43,12 +42,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     testFeatures=[]
     testLabels=[]
     
-    clf=None
-    
-    patientsDatasForSimilDirURL = ""
-    clinicDatasForSimilFileURL = ""
-    
-    nbr = 0
+    clf=[]
     
     
     def __init__(self):
@@ -78,10 +72,6 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.test.clicked.connect(self.testData)
         self.test.setEnabled(False)
         self.pushButton.clicked.connect(self.loadingDataTest)
-        self.buttonDonnee.clicked.connect(self.loadPatientsDatasForSimil)
-        self.buttonClinique.clicked.connect(self.loadClinicDatasForSimil)
-        self.reinitialiser.clicked.connect(self.reinitSimil)
-        self.calcul.clicked.connect(self.runSimilAlgorithm)
         
     #ouverture d'une fenetre d'erreur lorsque cytoscape n'est pas lancé    
     def alerte(a):
@@ -237,21 +227,24 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
 
     def training(self):
-        self.clf = RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy')
-        
-        self.clf.fit(self.trainFeatures,self.trainLabels)
+        self.clf.append(RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy'))
+        if (not self.test.isEnabled()):
+            self.comboBox.clear()
+        self.clf[-1].fit(self.trainFeatures,self.trainLabels)
+        self.comboBox.addItem("Classificateur "+str(len(self.clf)))
         self.test.setEnabled(True)
         
     def testData(self):
         path=self.dataTest[self.listWidget.currentRow()]
         (features,labels)=self.importData(path)
         (p,matrix)=self.validation(features,labels)
+        self.fichier.setText(os.path.basename(path))
         self.precision.setText(str('{:01.2f}'.format(p)))
         self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
         
     def validation(self,X,y):
         #print("Prediction:")
-        pred=self.clf.predict(X)
+        pred=self.clf[self.comboBox.currentIndex()].predict(X)
         confusionMatrix=confusion_matrix(pred,y)
         #print(confusionMatrix)
         precision=sum(numpy.diagonal(confusionMatrix))/sum(sum(confusionMatrix))
@@ -1087,165 +1080,6 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             for line in graphesComposantes[i]:
                 file.write(line)
                 file.write("\n")
-               
-    #Permet de sélectionner le dossier pour le jeu de données               
-    def loadPatientsDatasForSimil(self):
-        self.patientsDatasForSimilDirURL = QtWidgets.QFileDialog.getExistingDirectory(self, "Open Directory", "C:\\")
-        
-        self.donnees.item(0).setText(self.patientsDatasForSimilDirURL)
-    
-    #Permet de sélectionner le fichier clinique pour le calcul
-    def loadClinicDatasForSimil(self):
-        self.clinicDatasForSimilFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\")
-        
-        self.clinique.item(0).setText(self.clinicDatasForSimilFileURL[0])
-    
-    #Réinitialise l'onglet Similarité
-    def reinitSimil(self):
-        self.donnees.item(0).setText("Jeu_de_données")
-        self.clinique.item(0).setText("Fichier_clinique")
-        self.patientsDatasForSimilDirURL = ''
-        self.clinicDatasForSimilFileURL = ''
-        self.buttonDonnee.setEnabled(True)
-        self.buttonClinique.setEnabled(True)
-        self.calcul.setEnabled(True)
-        
-    #Définition de la fonction MSComputing en accord avec le script de Bertrand
-    def computing(self,p,c,f):
-        #Chargement du fichier test
-        test=open(f,'w')
-        
-        nom=p.split("/")
-        nom=nom[len(nom)-1]
-        ligne=nom
-        
-        # Charger liste des Observations
-        Observations={}
-        
-        file=open(p,"r")
-        data=file.readlines()
-        file.close()
-        
-        
-        
-        for i in data:
-            #print(i.split(" "))
-            node=i.split(" ")[0]
-            signe=i.split(" ")[2].split("\n")[0]
-            
-                #print(node+" "+signe)
-            Observations[node]=float(signe)*1.0
-        
-        # Chargement des Tuples
-        file=open(c,"r")
-        data=file.readlines()
-        file.close()
-        
-        
-        # Pour chaque tuple
-        for i in data:
-                listeSousTuples=[]
-                listeSignes={}
-                nbreMatching=0
-                sommematching=0.0
-                tuples=i.split("\n")[0].split(",")
-                #print(tuples)
-                # Pour chaque sous tuple
-                for sousTuple in tuples:
-                    node=sousTuple.split(" ")[0]
-                    signe=sousTuple.split(" ")[1]
-                    listeSousTuples.append(node)
-                    listeSignes[node]=signe
-            #	print(len(listeSousTuples))
-                # Pour chaque observation :
-                for node in Observations.keys():
-                    # Si le noeud est présent
-                    if(node in listeSousTuples):
-                        #print(node+" "+listeSignes[node]+" "+str(Observations[node]))
-                        # Incrémenter matching
-                        nbreMatching=nbreMatching+1
-                        # incrémenter en fonction la somme matching
-                            # Si signe à + => ajouter valeur
-                        if(listeSignes[node]=="+"):
-                            sommematching=sommematching+Observations[node]
-                        # Si signe à - => 1-valeur
-                        else:
-                            sommematching=sommematching+(1-Observations[node])
-                        
-                #print(sommematching)
-                #print(nbreMatching)
-                MS=0.5
-                if(nbreMatching!=0):
-                    MS=sommematching/nbreMatching
-                MS=max(MS, 1-MS)
-                ligne=ligne+" "+str(MS)
-        
-        #print(ligne)
-        test.write(ligne)
-        test.close()
-        return test
-    
-    #Lance l'algorithme de calcul de similarité
-    def runSimilAlgorithm(self):
-        #On vérifie que l'utilisateur a bien sélectionné les informations demandées
-        if self.patientsDatasForSimilDirURL != "" and self.clinicDatasForSimilFileURL != "":
-            results=open(dir_path + '\\resultat' + str(self.nbr) + '.csv','w')
-            #Traitement des données
-            for i in os.listdir(self.patientsDatasForSimilDirURL):
-                
-                #Ouverture du fichier et affichage
-                f = open(self.patientsDatasForSimilDirURL + '\\' + i, 'r')
-                nom=os.path.basename(f.name) 
-                #print('dataPatientGSE19784HOVON65/'+nom)
-                
-                #Suppression des gènes "NA" en passant par le fichier test
-                test = open(dir_path+'test','w')
-                for line in f:
-                    if re.search(r' = NA', line) is None:
-                        #Écriture dans le fichier test
-                        test.write(line)
-                f.close()
-                test.close()
-                
-                #On repasse le fichier texte dans le fichier de gènes (qui ne contient
-                # alors plus de gènes NA)
-                f = open(self.patientsDatasForSimilDirURL + '\\' + i,'w')
-                test = open(dir_path + 'test','r')
-                for line in test:
-                    f.write(line)
-                f.close()
-                test.close()
-                
-                # Manque à éxecuter le script MSComputing (dont le résultat sera foutu dans test)
-                # et faire des mini-traitements
-                # puis faire pareil sur l'autre dossier
-                pathtest=dir_path+ '\\' + 'testpython'
-                self.computing(self.patientsDatasForSimilDirURL + '\\' + i,dir_path + '\\'+'components.csv',pathtest) #A compléter avec le chemin d'accès au fichier des composants
-                ftest=open(pathtest,'r')
-                
-                cl=open(self.clinicDatasForSimilFileURL[0],'r')
-                for line in cl:
-                    if re.match(nom,line) is not None:
-                        clinique=line.split(',')[1]
-                cl.close()
-                
-
-                if clinique!="CENSORED":
-                    for line in ftest:
-                        results.write(line)
-                    results.write(" "+clinique)
-                ftest.close()
-
-            results.close()
-            os.remove(pathtest)
-
-            #self.qTextEdit.setText(self.qTextEdit.text() + '\n' + path + 'resultat' + nbr + '.csv')
-            self.nbr += 1
-            
-            #On désactive le calcul jusqu'à réinitialisation
-            self.buttonDonnee.setEnabled(False)
-            self.buttonClinique.setEnabled(False)
-            self.calcul.setEnabled(False)
         
     def main(self):
         self.show()
