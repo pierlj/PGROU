@@ -1241,7 +1241,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             results.close()
             os.remove(pathtest)
 
-            #self.qTextEdit.setText(self.qTextEdit.text() + '\n' + path + 'resultat' + nbr + '.csv')
+            #self.donnees.addItem( dir_path + 'resultat' + nbr + '.csv')
             self.nbr += 1
             
             #On désactive le calcul jusqu'à réinitialisation
