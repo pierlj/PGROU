@@ -86,18 +86,14 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.pushButton.clicked.connect(self.loadingDataTest)
         self.buttonDonnee.clicked.connect(self.loadPatientsDatasForSimil)
         self.buttonClinique.clicked.connect(self.loadClinicDatasForSimil)
-<<<<<<< HEAD
         self.buttonCsv.clicked.connect(self.loadComponentsFileForSimil)
         self.buttonSif.clicked.connect(self.loadGrapheGenesFileForSimil)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
         self.graphSimi.clicked.connect(self.modifyDisplayGraphState)
         self.dataPred.clicked.connect(self.modifyButtonClinique)
-        
-=======
         self.chercher.clicked.connect(self.loadDataPred)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
         self.lancer.clicked.connect(self.prediction)
->>>>>>> 81941ada997caa7411ecb110d8566bf188354aed
         
     #ouverture d'une fenetre d'erreur lorsque cytoscape n'est pas lancé    
     def alerte(a):
@@ -1341,8 +1337,6 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
             table=net1.get_node_table()
             nodes=net1.get_nodes()
-            
-            
             
             for node in nodes:
                 table.set_value(node, "Similarite", hashMap[node])
