@@ -47,6 +47,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
     patientsDatasForSimilDirURL = ""
     clinicDatasForSimilFileURL = ""
+    componentsFileUrl = ""
+    grapheGenesFileURL = ""
     
     nbr = 0
     
@@ -80,8 +82,12 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.pushButton.clicked.connect(self.loadingDataTest)
         self.buttonDonnee.clicked.connect(self.loadPatientsDatasForSimil)
         self.buttonClinique.clicked.connect(self.loadClinicDatasForSimil)
-        self.reinitialiser.clicked.connect(self.reinitSimil)
+        self.buttonCsv.clicked.connect(self.loadComponentsFileForSimil)
+        self.buttonSif.clicked.connect(self.loadGrapheGenesFileForSimil)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
+        self.graphSimi.clicked.connect(self.modifyDisplayGraphState)
+        self.dataPred.clicked.connect(self.modifyButtonClinique)
+        
         
     #ouverture d'une fenetre d'erreur lorsque cytoscape n'est pas lancé    
     def alerte(a):
@@ -1093,25 +1099,21 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
     #Permet de sélectionner le dossier pour le jeu de données               
     def loadPatientsDatasForSimil(self):
-        self.patientsDatasForSimilDirURL = QtWidgets.QFileDialog.getExistingDirectory(self, "Open Directory", "C:\\")
-        
+        self.patientsDatasForSimilDirURL = QtWidgets.QFileDialog.getExistingDirectory(self, "Open Directory", dir_path + '\\')
         self.donnees.item(0).setText(self.patientsDatasForSimilDirURL)
     
     #Permet de sélectionner le fichier clinique pour le calcul
     def loadClinicDatasForSimil(self):
-        self.clinicDatasForSimilFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\")
-        
+        self.clinicDatasForSimilFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\')
         self.clinique.item(0).setText(self.clinicDatasForSimilFileURL[0])
-    
-    #Réinitialise l'onglet Similarité
-    def reinitSimil(self):
-        self.donnees.item(0).setText("Jeu_de_données")
-        self.clinique.item(0).setText("Fichier_clinique")
-        self.patientsDatasForSimilDirURL = ''
-        self.clinicDatasForSimilFileURL = ''
-        self.buttonDonnee.setEnabled(True)
-        self.buttonClinique.setEnabled(True)
-        self.calcul.setEnabled(True)
+        
+    def loadComponentsFileForSimil(self):
+        self.componentsFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\')
+        self.csv.item(0).setText(self.componentsFileURL[0])
+        
+    def loadGrapheGenesFileForSimil(self):
+        self.grapheGenesFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\')
+        self.sif.item(0).setText(self.grapheGenesFileURL[0])
         
     #Définition de la fonction MSComputing en accord avec le script de Bertrand
     def computing(self,p,c,f):
@@ -1186,13 +1188,132 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         #print(ligne)
         test.write(ligne)
         test.close()
-        return test
+        
+    def grapheSimilarite(self, rfile):
+        resultFile = open(rfile,'r')
+        strings = resultFile.readline().split(' ')
+        patientName = strings[0]
+        similVector = strings[1:-1]
+        resultFile.close()
+        
+        fileComponents = open(self.componentsFileURL, 'r')
+        hashMap = {}
+        n = 0
+        listeComposantes = []
+        for line in fileComponents:
+            if line != '':
+                composante = line.split(',')
+                for i in range (len(composante)):
+                    composante[i] = composante[i][:-2]
+                listeComposantes.append(composante)
+                n += 1
+                hashMap["Noeud" + str(n)] = similVector[n-1]
+        fileComponents.close()
+                
+        fileGraphe = open(self.grapheGenesFileURL,'r')
+        base = fileGraphe.readlines()
+        fileGrahe.close()
+        
+        resultFile = open(rfile,'r')
+        strings = resultFile.readline().split(' ')
+        patientName = strings[0]
+        similVector = strings[1:-1]
+        resultFile.close()
+        
+        grapheComposantes=[]
+        
+        for i in range(n):
+            composante1 = listeComposantes[i]
+            for j in range(i+1,n):
+                composante2 = listeComposantes[j]
+                for line in base:
+                    lineSliced = line[:-1]
+                    edge = lineSliced.split("\t")
+                        
+                    if (edge[0] in composante1 and edge[2] in composante2):
+                        arc = "Noeud" + str(i+1) + "\t" + edge[1] + "\t" + "Noeud" + str(j+1) + "\n"
+                        if arc not in grapheComposantes:
+                            grapheComposantes.append(arc)
+                            
+                    if (edge[2] in composante1 and edge[0] in composante2):
+                        arc = "Noeud" + str(j+1) + "\t" + edge[1] + "\t" + "Noeud" + str(i+1) + "\n"
+                        if arc not in grapheComposantes:
+                            grapheComposantes.append(arc)
+        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
+                                
+        dir = dir_path + "\\Graphes similarité"
+        
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        
+        fileGrapheSimilURL = dir + "\\Graphe_Patient" + patientName + ".sif"
+        fileGrapheSimil = open(fileGrapheSimilURL, 'w')
+        
+        for arc in grapheComposantes:
+            fileGrapheSimil.write(arc)
+            
+        fileGrapheSimil.close()
+        
+        return [fileGrapheSimilURL, hashMap]
+
+    def displayGrapheSimilarite(self, grapheURL, hashMap):
+        if not self.isRunning():
+            self.alerte()
+        else:
+            cy = CyRestClient()
+            net1 = cy.network.create_from(grapheURL)
+            net1.create_node_column("Similarite", data_type='Integer',is_immutable=False)
+            
+            table=net1.get_node_table()
+            nodes=net1.get_nodes()
+            
+            
+            
+            for node in nodes:
+                table.set_value(node, "Similarite", hashMap[node])
+    
+                
+            net1.update_node_table(table,network_key_col='name', data_key_col='name')
+            style1 = cy.style.create('sample_style1')
+        
+            points = [{
+            'value': '0.0',
+            'lesser':'blue',
+            'equal':'blue',
+            'greater': 'blue'
+            },{
+            'value': '1.0',
+            'lesser':'red',
+            'equal':'red',
+            'greater': 'red'
+            }]
+            
+            style1.create_continuous_mapping(column='Composant', col_type='Integer', vp='NODE_FILL_COLOR',points=points)
+            cy.style.apply(style1,net1)
+            cy.layout.apply(name='organic',network=net1)
+            self.doneC()   
+            
+    def modifyDisplayGraphState(self):
+        self.afficherGraph.setCheckable(self.graphSimi.isChecked())
+        
+    def modifyButtonClinique(self):
+        self.buttonClinique.setEnabled(not self.dataPred.isChecked)
+        
+    def similIsRunnable(self):
+        cond1 = self.patientsDatasForSimilDirURL != "" and self.clinicDatasForSimilFileURL[0] != "" and self.componentsFileURL[0] != ""
+        cond2 = self.patientsDatasForSimilDirURL != "" and self.dataPred.isChecked() and self.componentsFileURL[0] != ""
+        cond3 = not self.graphSimi.isChecked()
+        cond4 = self.grapheGenesFileURL[0] != "" and self.graphSimi.isChecked()
+        cond5 = not (self.graphSimi.isChecked() and self.dataPred.isChecked())
+        
+        return (cond1 or cond2) and (cond3 or cond4) and cond5
     
     #Lance l'algorithme de calcul de similarité
     def runSimilAlgorithm(self):
         #On vérifie que l'utilisateur a bien sélectionné les informations demandées
-        if self.patientsDatasForSimilDirURL != "" and self.clinicDatasForSimilFileURL != "":
-            results=open(dir_path + '\\resultat' + str(self.nbr) + '.csv','w')
+        if self.similIsRunnable():
+            rfile = dir_path + '\\resultat_' + patientsDatasForSimilDirURL.split("\\")[-1] + '.csv'
+            results=open(rfile,'w')
             #Traitement des données
             for i in os.listdir(self.patientsDatasForSimilDirURL):
                 
@@ -1223,34 +1344,36 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                 # et faire des mini-traitements
                 # puis faire pareil sur l'autre dossier
                 pathtest=dir_path+ '\\' + 'testpython'
-                self.computing(self.patientsDatasForSimilDirURL + '\\' + i,dir_path + '\\'+'components.csv',pathtest) #A compléter avec le chemin d'accès au fichier des composants
+                self.computing(self.patientsDatasForSimilDirURL + '\\' + i,dir_path + "\\components.csv",pathtest)
                 ftest=open(pathtest,'r')
                 
-                cl=open(self.clinicDatasForSimilFileURL[0],'r')
-                for line in cl:
-                    if re.match(nom,line) is not None:
-                        clinique=line.split(',')[1]
-                cl.close()
+                clinique = ""
+                if (not self.dataPred.isChecked()):
+                    cl=open(self.clinicDatasForSimilFileURL[0],'r')
+                    for line in cl:
+                        if re.match(nom,line) is not None:
+                            clinique=line.split(',')[1]
+                    cl.close()
                 
 
                 if clinique!="CENSORED":
                     for line in ftest:
                         results.write(line)
-                    results.write(" "+clinique)
+                    if (not self.dataPred.isChecked()):
+                        results.write(" "+clinique)
                 ftest.close()
 
             results.close()
             os.remove(pathtest)
-
-            #self.donnees.addItem( dir_path + 'resultat' + nbr + '.csv')
-            self.nbr += 1
             
-            #On désactive le calcul jusqu'à réinitialisation
-            self.buttonDonnee.setEnabled(False)
-            self.buttonClinique.setEnabled(False)
-            self.calcul.setEnabled(False)
+            if (self.graphSimi.isChecked()):
+                [fileURL, hashMap] = self.grapheSimilarite(results)
+                if (self.afficherGraph.isChecked()):
+                    self.displayGrapheSimilarite(fileURL, hashMap)
+
         
     def main(self):
+        print(self.table)
         self.show()
         
 if __name__ == "__main__":
