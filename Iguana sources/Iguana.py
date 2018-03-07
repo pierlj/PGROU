@@ -6,17 +6,19 @@ Created on Wed Nov 15 22:57:38 2017
 """
 
 #importation des modules nécessaires à l'application 
-#comment
 import sys
 import os
 from PyQt5 import QtWidgets
 from py2cytoscape.data.cyrest_client import CyRestClient
 import psutil
 import networkx as nx
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
 import numpy
 import re
+from xgboost import XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+import random
 
 #import du fichier génrant l'interface graphique
 import interface_ui
@@ -50,6 +52,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
     nbr = 0
     
+    dataPrediction=""
+    
     
     def __init__(self):
         super(Pappl, self).__init__()
@@ -80,8 +84,9 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.pushButton.clicked.connect(self.loadingDataTest)
         self.buttonDonnee.clicked.connect(self.loadPatientsDatasForSimil)
         self.buttonClinique.clicked.connect(self.loadClinicDatasForSimil)
-        self.reinitialiser.clicked.connect(self.reinitSimil)
+        self.chercher.clicked.connect(self.loadDataPred)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
+        self.lancer.clicked.connect(self.prediction)
         
     #ouverture d'une fenetre d'erreur lorsque cytoscape n'est pas lancé    
     def alerte(a):
@@ -237,11 +242,32 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
 
     def training(self):
-        self.clf.append(RandomForestClassifier(n_estimators=self.spinBox.value(),criterion='entropy'))
+        model = 0
+        
+        r=[]
+        for i in range (100):
+            seed = random.randint(1,10000)
+            test_size = self.spinBox.value()
+            X_train, X_test, y_train, y_test = train_test_split(self.trainFeatures, self.trainLabels, test_size=test_size, random_state=seed)
+            #print(X_test)
+            # fit model no training data
+            model = XGBClassifier(max_depth=2, learning_rate=0.1, n_estimators=100, silent=True, objective='binary:logistic', booster='gbtree', n_jobs=1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0, subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=0.5, random_state=0, seed=None, missing=None)
+            model.fit(X_train, y_train)
+        
+        
+            y_pred = model.predict(X_test)
+        #predictions = [round(value) for value in y_pred]
+        
+            accuracy = accuracy_score(y_test, y_pred)
+            r.append(accuracy)
+        
+        self.clf.append(model)
         if (not self.test.isEnabled()):
             self.comboBox.clear()
-        self.clf[-1].fit(self.trainFeatures,self.trainLabels)
+            self.classificateurPred.clear()
+        self.taux.setText(str(sum(r)/100*100.0)+"%")
         self.comboBox.addItem("Classificateur "+str(len(self.clf)))
+        self.classificateurPred.addItem("Classificateur "+str(len(self.clf)))
         self.test.setEnabled(True)
         
     def testData(self):
@@ -292,9 +318,52 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             for j in range (len (X[i])):
                 X[i][j]=float(X[i][j])
         file.close()
-        return(X,y)
+        return(numpy.array(X),numpy.array(y))
+    
+    def importDataPred(self,chemin):
+        path=chemin.replace('\\','\\\\')
+        print(chemin)
+        file=open(chemin,'r')
+        data=file.readlines()
+        names=[]
+        X=[]
+        
+        for i in data:
+            tab=i.split(" ")
+            names.append(tab[0])
+            X.append(tab[1:])
+        
+        for i in range (len(X)):
+            for j in range (len (X[i])):
+                X[i][j]=float(X[i][j])
+        file.close()
+        return(numpy.array(X),names)
             
-            
+    
+    def prediction(self):
+        (X,names)=self.importDataPred(self.dataPrediction)
+        y=self.clf[self.classificateurPred.currentIndex()].predict(X)
+        res=[]
+        n=len(X)
+        for i in range(n):
+            res.append(names[i]+" \t"+y[i])
+        path=self.dataPrediction[:-4]+"-predictions.csv"
+        file=open(path,'w')
+        for line in res:
+            file.write(line)
+            file.write("\n")
+        file.close()
+        
+        
+    
+    def loadDataPred(self):
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        self.dataPrediction=nom[0]
+        if (len(nom[0])>0):
+            self.patients.clear()
+            self.patients.addItem(nom[0])
+    
+    
             
     def loadingDataTest(self):
         print("loadTest")
@@ -1074,6 +1143,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                 current.append(compo[0])
             else:
                 for line in base:
+                    
                     lineSliced=line[:-1]
                     edge=lineSliced.split("\t")
                     
