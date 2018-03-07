@@ -15,7 +15,7 @@ import networkx as nx
 from sklearn.metrics import confusion_matrix
 import numpy
 import re
-from xgboost import XGBClassifier
+#from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import random
@@ -89,8 +89,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.buttonCsv.clicked.connect(self.loadComponentsFileForSimil)
         self.buttonSif.clicked.connect(self.loadGrapheGenesFileForSimil)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
-        self.graphSimi.clicked.connect(self.modifyDisplayGraphState)
-        self.dataPred.clicked.connect(self.modifyButtonClinique)
+        self.graphSimi.toggled.connect(self.modifyDisplayGraphState)
+        self.dataPred.toggled.connect(self.modifyButtonClinique)
         self.chercher.clicked.connect(self.loadDataPred)
         self.calcul.clicked.connect(self.runSimilAlgorithm)
         self.lancer.clicked.connect(self.prediction)
@@ -1179,11 +1179,11 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.clinique.item(0).setText(self.clinicDatasForSimilFileURL[0])
         
     def loadComponentsFileForSimil(self):
-        self.componentsFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\')
+        self.componentsFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.csv')
         self.csv.item(0).setText(self.componentsFileURL[0])
         
     def loadGrapheGenesFileForSimil(self):
-        self.grapheGenesFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\')
+        self.grapheGenesFileURL = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.sif')
         self.sif.item(0).setText(self.grapheGenesFileURL[0])
         
     #Définition de la fonction MSComputing en accord avec le script de Bertrand
@@ -1191,8 +1191,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         #Chargement du fichier test
         test=open(f,'w')
         
-        nom=p.split("/")
-        nom=nom[len(nom)-1]
+        nom=p.split("\\")
+        nom=nom[-1]
         ligne=nom
         
         # Charger liste des Observations
@@ -1267,7 +1267,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         similVector = strings[1:-1]
         resultFile.close()
         
-        fileComponents = open(self.componentsFileURL, 'r')
+        fileComponents = open(self.componentsFileURL[0], 'r')
         hashMap = {}
         n = 0
         listeComposantes = []
@@ -1281,9 +1281,9 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                 hashMap["Noeud" + str(n)] = similVector[n-1]
         fileComponents.close()
                 
-        fileGraphe = open(self.grapheGenesFileURL,'r')
+        fileGraphe = open(self.grapheGenesFileURL[0],'r')
         base = fileGraphe.readlines()
-        fileGrahe.close()
+        fileGraphe.close()
         
         resultFile = open(rfile,'r')
         strings = resultFile.readline().split(' ')
@@ -1319,6 +1319,9 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
         fileGrapheSimilURL = dir + "\\Graphe_Patient" + patientName + ".sif"
         fileGrapheSimil = open(fileGrapheSimilURL, 'w')
+        
+        # for i in range(n):
+        #     fileGrapheSimil.write("Noeud" + str(n+1) + "\n")
         
         for arc in grapheComposantes:
             fileGrapheSimil.write(arc)
@@ -1363,16 +1366,18 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             self.doneC()   
             
     def modifyDisplayGraphState(self):
-        self.afficherGraph.setCheckable(self.graphSimi.isChecked())
+        self.afficherGraph.setEnabled(self.graphSimi.isChecked())
+        if (not self.graphSimi.isChecked()):
+            self.afficherGraph.setChecked(False)
         
     def modifyButtonClinique(self):
-        self.buttonClinique.setEnabled(not self.dataPred.isChecked)
+        self.buttonClinique.setEnabled(not self.dataPred.isChecked())
         
     def similIsRunnable(self):
-        cond1 = self.patientsDatasForSimilDirURL != "" and self.clinicDatasForSimilFileURL[0] != "" and self.componentsFileURL[0] != ""
-        cond2 = self.patientsDatasForSimilDirURL != "" and self.dataPred.isChecked() and self.componentsFileURL[0] != ""
+        cond1 = self.donnees.item(0).text() != "" and self.donnees.item(0).text() != "Jeu_de_données" and self.clinique.item(0).text() != "" and self.clinique.item(0).text() != "Fichier_clinique" and self.csv.item(0).text() != "" and self.csv.item(0).text() != "Fichier_CSV"
+        cond2 = self.donnees.item(0).text() != "" and self.donnees.item(0).text() != "Jeu_de_données" and self.dataPred.isChecked() and self.csv.item(0).text() != "" and self.csv.item(0).text() != "Fichier_CSV"
         cond3 = not self.graphSimi.isChecked()
-        cond4 = self.grapheGenesFileURL[0] != "" and self.graphSimi.isChecked()
+        cond4 = (self.sif.item(0).text() != "" and self.sif.item(0).text() != "Fichier_Sif" and self.graphSimi.isChecked())
         cond5 = not (self.graphSimi.isChecked() and self.dataPred.isChecked())
         
         return (cond1 or cond2) and (cond3 or cond4) and cond5
@@ -1381,7 +1386,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     def runSimilAlgorithm(self):
         #On vérifie que l'utilisateur a bien sélectionné les informations demandées
         if self.similIsRunnable():
-            rfile = dir_path + '\\resultat_' + patientsDatasForSimilDirURL.split("\\")[-1] + '.csv'
+            rfile = dir_path + '\\resultat_' + self.patientsDatasForSimilDirURL.split("/")[-1] + '.csv'
             results=open(rfile,'w')
             #Traitement des données
             for i in os.listdir(self.patientsDatasForSimilDirURL):
@@ -1436,7 +1441,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             os.remove(pathtest)
             
             if (self.graphSimi.isChecked()):
-                [fileURL, hashMap] = self.grapheSimilarite(results)
+                [fileURL, hashMap] = self.grapheSimilarite(rfile)
                 if (self.afficherGraph.isChecked()):
                     self.displayGrapheSimilarite(fileURL, hashMap)
 
