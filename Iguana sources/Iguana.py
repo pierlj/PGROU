@@ -1272,13 +1272,16 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         n = 0
         listeComposantes = []
         for line in fileComponents:
-            if line != '':
+            if line != '\n':
                 composante = line.split(',')
                 for i in range (len(composante)):
-                    composante[i] = composante[i][:-2]
+                    if (i == len(composante) - 1):
+                        composante[i] = composante[i][:-3]
+                    else:
+                        composante[i] = composante[i][:-2]
                 listeComposantes.append(composante)
                 n += 1
-                hashMap["Noeud" + str(n)] = similVector[n-1]
+                hashMap["NOEUD" + str(n)] = similVector[n-1]
         fileComponents.close()
                 
         fileGraphe = open(self.grapheGenesFileURL[0],'r')
@@ -1292,6 +1295,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         resultFile.close()
         
         grapheComposantes=[]
+        print (listeComposantes)
         
         for i in range(n):
             composante1 = listeComposantes[i]
@@ -1302,15 +1306,15 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                     edge = lineSliced.split("\t")
                         
                     if (edge[0] in composante1 and edge[2] in composante2):
-                        arc = "Noeud" + str(i+1) + "\t" + edge[1] + "\t" + "Noeud" + str(j+1) + "\n"
+                        arc = "\nNOEUD" + str(i+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(j+1)
                         if arc not in grapheComposantes:
                             grapheComposantes.append(arc)
                             
                     if (edge[2] in composante1 and edge[0] in composante2):
-                        arc = "Noeud" + str(j+1) + "\t" + edge[1] + "\t" + "Noeud" + str(i+1) + "\n"
+                        arc = "\nNOEUD" + str(j+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(i+1)
                         if arc not in grapheComposantes:
                             grapheComposantes.append(arc)
-        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
+        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][6:]))
                                 
         dir = dir_path + "\\Graphes similarité"
         
@@ -1320,8 +1324,11 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         fileGrapheSimilURL = dir + "\\Graphe_Patient" + patientName + ".sif"
         fileGrapheSimil = open(fileGrapheSimilURL, 'w')
         
-        # for i in range(n):
-        #     fileGrapheSimil.write("Noeud" + str(n+1) + "\n")
+        for i in range(n):
+            if i != n-1:
+                fileGrapheSimil.write("NOEUD" + str(i+1) + "\n")
+            else:
+                fileGrapheSimil.write("NOEUD" + str(i+1))
         
         for arc in grapheComposantes:
             fileGrapheSimil.write(arc)
@@ -1334,7 +1341,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         if not self.isRunning():
             self.alerte()
         else:
-            cy = CyRestClient()
+            cy = CyRestClient()            
             net1 = cy.network.create_from(grapheURL)
             net1.create_node_column("Similarite", data_type='Integer',is_immutable=False)
             
@@ -1343,9 +1350,9 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
             for node in nodes:
                 table.set_value(node, "Similarite", hashMap[node])
-    
-                
+                    
             net1.update_node_table(table,network_key_col='name', data_key_col='name')
+            
             style1 = cy.style.create('sample_style1')
         
             points = [{
@@ -1361,6 +1368,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             }]
             
             style1.create_continuous_mapping(column='Composant', col_type='Integer', vp='NODE_FILL_COLOR',points=points)
+
             cy.style.apply(style1,net1)
             cy.layout.apply(name='organic',network=net1)
             self.doneC()   
