@@ -6,6 +6,7 @@ Created on Wed Nov 15 22:57:38 2017
 """
 
 #importation des modules nécessaires à l'application 
+#comment
 import sys
 import os
 from PyQt5 import QtWidgets
