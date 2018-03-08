@@ -1350,8 +1350,10 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             table=net1.get_node_table()
             nodes=net1.get_nodes()
             
+            print (len(hashMap))
+            
             for node in nodes:
-                table.set_value(node, "Similarite", hashMap[net1.get_node_value(node)['name']])
+                table.set_value(node, "Similarite", str(float(hashMap[net1.get_node_value(node)['name']])*30.0))
                     
             net1.update_node_table(table,network_key_col='name', data_key_col='name')
             
@@ -1364,10 +1366,11 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             'greater': 'blue'
             },{
             'value': '1.0',
-            'lesser':'red',
-            'equal':'red',
-            'greater': 'red'
-            }]
+            'lesser': 'red',
+            'equal': 'red',
+            'greater': 'red'}]
+            
+            points[1]['value'] = '30.0'
             
             kv_pair = {
                 '-1': 'T',
@@ -1376,7 +1379,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             style1.create_discrete_mapping(column='interaction', 
                                         col_type='String', vp='EDGE_SOURCE_ARROW_SHAPE', mappings=kv_pair)
             
-            style1.create_continuous_mapping(column='Similarite', col_type='Float', vp='NODE_FILL_COLOR',points=points)
+            style1.create_continuous_mapping(column='Similarite', col_type='Integer', vp='NODE_FILL_COLOR',points=points)
 
             cy.style.apply(style1,net1)
             cy.layout.apply(name='organic',network=net1)
