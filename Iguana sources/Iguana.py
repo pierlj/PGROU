@@ -1295,7 +1295,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         resultFile.close()
         
         grapheComposantes=[]
-        print (listeComposantes)
+        nodeAlone = [True for _ in range(n)]
         
         for i in range(n):
             composante1 = listeComposantes[i]
@@ -1306,32 +1306,34 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                     edge = lineSliced.split("\t")
                         
                     if (edge[0] in composante1 and edge[2] in composante2):
-                        arc = "\nNOEUD" + str(i+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(j+1)
+                        arc = "NOEUD" + str(i+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(j+1) + "\n"
                         if arc not in grapheComposantes:
                             grapheComposantes.append(arc)
+                            nodeAlone[i] = False
+                            nodeAlone[j] = False
                             
                     if (edge[2] in composante1 and edge[0] in composante2):
-                        arc = "\nNOEUD" + str(j+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(i+1)
+                        arc = "NOEUD" + str(j+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(i+1) + "\n"
                         if arc not in grapheComposantes:
                             grapheComposantes.append(arc)
-        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][6:]))
+                            nodeAlone[i] = False
+                            nodeAlone[j] = False
+        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
                                 
-        dir = dir_path + "\\Graphes similarité"
+        dir = dir_path[:-15] + "\\Data"
         
         if not os.path.exists(dir):
             os.makedirs(dir)
         
-        fileGrapheSimilURL = dir + "\\Graphe_Patient" + patientName + ".sif"
+        fileGrapheSimilURL = dir + "\\Graphe_" + patientName + ".sif"
         fileGrapheSimil = open(fileGrapheSimilURL, 'w')
-        
-        for i in range(n):
-            if i != n-1:
-                fileGrapheSimil.write("NOEUD" + str(i+1) + "\n")
-            else:
-                fileGrapheSimil.write("NOEUD" + str(i+1))
         
         for arc in grapheComposantes:
             fileGrapheSimil.write(arc)
+            
+        for i in range(n):
+            if nodeAlone[i] == True:
+                fileGrapheSimil.write("NOEUD" + str(i+1) + "\n")
             
         fileGrapheSimil.close()
         
@@ -1343,13 +1345,13 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         else:
             cy = CyRestClient()            
             net1 = cy.network.create_from(grapheURL)
-            net1.create_node_column("Similarite", data_type='Integer',is_immutable=False)
+            net1.create_node_column("Similarite", data_type='Float',is_immutable=False)
             
             table=net1.get_node_table()
             nodes=net1.get_nodes()
             
             for node in nodes:
-                table.set_value(node, "Similarite", hashMap[node])
+                table.set_value(node, "Similarite", hashMap[net1.get_node_value(node)['name']])
                     
             net1.update_node_table(table,network_key_col='name', data_key_col='name')
             
@@ -1367,11 +1369,18 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             'greater': 'red'
             }]
             
-            style1.create_continuous_mapping(column='Composant', col_type='Integer', vp='NODE_FILL_COLOR',points=points)
+            kv_pair = {
+                '-1': 'T',
+                '1': 'Arrow'
+            }
+            style1.create_discrete_mapping(column='interaction', 
+                                        col_type='String', vp='EDGE_SOURCE_ARROW_SHAPE', mappings=kv_pair)
+            
+            style1.create_continuous_mapping(column='Similarite', col_type='Float', vp='NODE_FILL_COLOR',points=points)
 
             cy.style.apply(style1,net1)
             cy.layout.apply(name='organic',network=net1)
-            self.doneC()   
+            
             
     def modifyDisplayGraphState(self):
         self.afficherGraph.setEnabled(self.graphSimi.isChecked())
