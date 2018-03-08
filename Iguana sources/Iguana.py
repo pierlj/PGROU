@@ -88,7 +88,6 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.buttonClinique.clicked.connect(self.loadClinicDatasForSimil)
         self.buttonCsv.clicked.connect(self.loadComponentsFileForSimil)
         self.buttonSif.clicked.connect(self.loadGrapheGenesFileForSimil)
-        self.calcul.clicked.connect(self.runSimilAlgorithm)
         self.graphSimi.toggled.connect(self.modifyDisplayGraphState)
         self.dataPred.toggled.connect(self.modifyButtonClinique)
         self.chercher.clicked.connect(self.loadDataPred)
@@ -1327,7 +1326,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
         fileGrapheSimilURL = dir + "\\Graphe_" + patientName + ".sif"
         fileGrapheSimil = open(fileGrapheSimilURL, 'w')
-        
+        print(fileGrapheSimilURL)
         for arc in grapheComposantes:
             fileGrapheSimil.write(arc)
             
@@ -1345,7 +1344,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         else:
             cy = CyRestClient()            
             net1 = cy.network.create_from(grapheURL)
-            net1.create_node_column("Similarite", data_type='Float',is_immutable=False)
+            net1.create_node_column("Similarite", data_type='Integer',is_immutable=False)
             
             table=net1.get_node_table()
             nodes=net1.get_nodes()
@@ -1353,33 +1352,49 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             print (len(hashMap))
             
             for node in nodes:
-                table.set_value(node, "Similarite", str(float(hashMap[net1.get_node_value(node)['name']])*30.0))
-                    
+                
+                table.set_value(node, "Similarite", int(float(hashMap[net1.get_node_value(node)['name']])*100))
+            
             net1.update_node_table(table,network_key_col='name', data_key_col='name')
             
             style1 = cy.style.create('sample_style1')
         
+        
+            mini=100
+            maxi=0
+            for node in nodes:
+                
+                a=int(float(hashMap[net1.get_node_value(node)['name']])*100)
+                print(a)
+                if a<mini:
+                    mini=a
+                if a>maxi:
+                    maxi=a
+        
+        
+            print(mini)
+            print(maxi)
             points = [{
             'value': '0.0',
-            'lesser':'blue',
-            'equal':'blue',
-            'greater': 'blue'
+            'lesser':'red',
+            'equal':'red',
+            'greater': 'red'
             },{
-            'value': '1.0',
-            'lesser': 'red',
-            'equal': 'red',
-            'greater': 'red'}]
+            'value': '100',
+            'lesser': 'green',
+            'equal': 'green',
+            'greater': 'green'}]
             
-            points[1]['value'] = '30.0'
+            points[0]["value"]=mini
+            points[1]["value"]=maxi
             
             kv_pair = {
                 '-1': 'T',
                 '1': 'Arrow'
             }
-            style1.create_discrete_mapping(column='interaction', 
-                                        col_type='String', vp='EDGE_SOURCE_ARROW_SHAPE', mappings=kv_pair)
+            style1.create_discrete_mapping(column='interaction',col_type='String',vp='EDGE_SOURCE_ARROW_SHAPE', mappings=kv_pair)
             
-            style1.create_continuous_mapping(column='Similarite', col_type='Integer', vp='NODE_FILL_COLOR',points=points)
+            style1.create_continuous_mapping(column='Similarite',col_type='Integer',vp='NODE_FILL_COLOR',points=points)
 
             cy.style.apply(style1,net1)
             cy.layout.apply(name='organic',network=net1)
@@ -1462,6 +1477,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
             if (self.graphSimi.isChecked()):
                 [fileURL, hashMap] = self.grapheSimilarite(rfile)
+                print("e")
                 if (self.afficherGraph.isChecked()):
                     self.displayGrapheSimilarite(fileURL, hashMap)
 
