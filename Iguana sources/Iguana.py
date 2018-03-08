@@ -15,7 +15,7 @@ import networkx as nx
 from sklearn.metrics import confusion_matrix
 import numpy
 import re
-#from xgboost import XGBClassifier
+from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import random
