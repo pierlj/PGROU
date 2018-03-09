@@ -120,6 +120,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         dialog.layout.addWidget(ok, 1, 1)
         dialog.exec_()
     
+    
     #affichage d'un message lorsque l'identification des colorations est terminée
     def doneI(a):
         msglabel = QtWidgets.QLabel("\t\tL'identification des composants est finie.\t\t")
@@ -159,9 +160,57 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         dialog.layout.addWidget(ok, 1, 1)
         dialog.exec_()
     
+    def doneClass(a):
+        msglabel = QtWidgets.QLabel("\t\tCréation du classificateur terminée.\t\t")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Fini")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+        
+    def donePred(a):
+        msglabel = QtWidgets.QLabel("\t\tPrédiction terminée.\t\t")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Fini")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+        
+    def doneSimil(a):
+        msglabel = QtWidgets.QLabel("\t\tCalcul de similarité terminé.\t\t")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Fini")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+    
     #affichage d'un message lorsque l'on veut effectuer une tâche sans que les fichiers nécessaires soient présents dans le répertoire correspondant
     def pb(a):
         msglabel = QtWidgets.QLabel("Attention : il manque les fichiers necéssaires pour effectuer cette opération.\nMerci d'effectuer d'abord la réduction du graphe.")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Attention")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+    
+    def missingFiles(a):
+        msglabel = QtWidgets.QLabel("\tAttention : il manque des fichiers necéssaires pour effectuer cette opération.\t")
         dialog = QtWidgets.QDialog()
         dialog.setWindowTitle("Attention")
         ok = QtWidgets.QPushButton('OK', dialog)
@@ -275,6 +324,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         self.comboBox.addItem("Classificateur "+str(len(self.clf)))
         self.classificateurPred.addItem("Classificateur "+str(len(self.clf)))
         self.test.setEnabled(True)
+        self.doneClass()
         
     def testData(self):
         path=self.dataTest[self.listWidget.currentRow()]
@@ -359,6 +409,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             file.write(line)
             file.write("\n")
         file.close()
+        self.donePred()
         
         
     
@@ -1259,6 +1310,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         test.write(ligne)
         test.close()
         
+        
     def grapheSimilarite(self, rfile):
         resultFile = open(rfile,'r')
         strings = resultFile.readline().split(' ')
@@ -1470,16 +1522,25 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                         results.write(line)
                     if (not self.dataPred.isChecked()):
                         results.write(" "+clinique)
+                    else:
+                        results.write("\n")
                 ftest.close()
+                
+                
 
             results.close()
             os.remove(pathtest)
             
             if (self.graphSimi.isChecked()):
                 [fileURL, hashMap] = self.grapheSimilarite(rfile)
-                print("e")
                 if (self.afficherGraph.isChecked()):
                     self.displayGrapheSimilarite(fileURL, hashMap)
+            
+            self.doneSimil()
+        else:
+            self.missingFiles()
+            
+            
 
         
     def main(self):
