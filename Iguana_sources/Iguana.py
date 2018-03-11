@@ -221,6 +221,30 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         dialog.layout.addWidget(ok, 1, 1)
         dialog.exec_()
     
+    def missingTestFiles(a):
+        msglabel = QtWidgets.QLabel("\tAttention : veuillez sélectionner un fichier à tester.\t")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Attention")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+    
+    def noClass(a):
+        msglabel = QtWidgets.QLabel("\tAttention : classificateur manquant.\t\n Veuillez créer un classificateur depuis l'onglet de classification.")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Attention")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+    
     #fonction determinant si Cytoscape est lancé
     def isRunning(s):
         for pid in psutil.pids():
@@ -298,41 +322,46 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
 
     def training(self):
         model = 0
-        
-        r=[]
-        for i in range (100):
-            seed = random.randint(1,10000)
-            test_size = self.spinBox.value()
-            X_train, X_test, y_train, y_test = train_test_split(self.trainFeatures, self.trainLabels, test_size=test_size, random_state=seed)
-            #print(X_test)
-            # fit model no training data
-            model = XGBClassifier(max_depth=2, learning_rate=0.1, n_estimators=100, silent=True, objective='binary:logistic', booster='gbtree', n_jobs=1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0, subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=0.5, random_state=0, seed=None, missing=None)
-            model.fit(X_train, y_train)
-        
-        
-            y_pred = model.predict(X_test)
-        #predictions = [round(value) for value in y_pred]
-        
-            accuracy = accuracy_score(y_test, y_pred)
-            r.append(accuracy)
-        
-        self.clf.append(model)
-        if (not self.test.isEnabled()):
-            self.comboBox.clear()
-            self.classificateurPred.clear()
-        self.taux.setText(str(sum(r)/100*100.0)+"%")
-        self.comboBox.addItem("Classificateur "+str(len(self.clf)))
-        self.classificateurPred.addItem("Classificateur "+str(len(self.clf)))
-        self.test.setEnabled(True)
-        self.doneClass()
+        if self.nomFichier.item(0).text() != "":
+            r=[]
+            for i in range (100):
+                seed = random.randint(1,10000)
+                test_size = self.spinBox.value()
+                X_train, X_test, y_train, y_test = train_test_split(self.trainFeatures, self.trainLabels, test_size=test_size, random_state=seed)
+                #print(X_test)
+                # fit model no training data
+                model = XGBClassifier(max_depth=2, learning_rate=0.1, n_estimators=100, silent=True, objective='binary:logistic', booster='gbtree', n_jobs=1, nthread=None, gamma=0, min_child_weight=1, max_delta_step=0, subsample=1, colsample_bytree=1, colsample_bylevel=1, reg_alpha=0, reg_lambda=1, scale_pos_weight=1, base_score=0.5, random_state=0, seed=None, missing=None)
+                model.fit(X_train, y_train)
+            
+            
+                y_pred = model.predict(X_test)
+            #predictions = [round(value) for value in y_pred]
+            
+                accuracy = accuracy_score(y_test, y_pred)
+                r.append(accuracy)
+            
+            self.clf.append(model)
+            if (not self.test.isEnabled()):
+                self.comboBox.clear()
+                self.classificateurPred.clear()
+            self.taux.setText(str(sum(r)/100*100.0)+"%")
+            self.comboBox.addItem("Classificateur "+str(len(self.clf)))
+            self.classificateurPred.addItem("Classificateur "+str(len(self.clf)))
+            self.test.setEnabled(True)
+            self.doneClass()
+        else:
+            self.missingFiles()
         
     def testData(self):
-        path=self.dataTest[self.listWidget.currentRow()]
-        (features,labels)=self.importData(path)
-        (p,matrix)=self.validation(features,labels)
-        self.fichier.setText(os.path.basename(path))
-        self.precision.setText(str('{:01.2f}'.format(p)))
-        self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
+        if  self.listWidget.count() != 0:
+            path=self.dataTest[self.listWidget.currentRow()]
+            (features,labels)=self.importData(path)
+            (p,matrix)=self.validation(features,labels)
+            self.fichier.setText(os.path.basename(path))
+            self.precision.setText(str('{:01.2f}'.format(p)))
+            self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
+        else:
+            self.missingTestFiles()
         
     def validation(self,X,y):
         #print("Prediction:")
@@ -397,19 +426,27 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
     
     def prediction(self):
-        (X,names)=self.importDataPred(self.dataPrediction)
-        y=self.clf[self.classificateurPred.currentIndex()].predict(X)
-        res=[]
-        n=len(X)
-        for i in range(n):
-            res.append(names[i]+" \t"+y[i])
-        path=self.dataPrediction[:-4]+"-predictions.csv"
-        file=open(path,'w')
-        for line in res:
-            file.write(line)
-            file.write("\n")
-        file.close()
-        self.donePred()
+        if self.classificateurPred.itemText(0) == "--Classificateur--":
+            self.noClass()
+        
+        elif  self.patients.item(0).text() != "" and self.patients.item(0).text() != "Données_patients":
+            print(self.classificateurPred.itemText(0))
+            (X,names)=self.importDataPred(self.dataPrediction)
+            y=self.clf[self.classificateurPred.currentIndex()].predict(X)
+            res=[]
+            n=len(X)
+            for i in range(n):
+                res.append(names[i]+" \t"+y[i])
+            path=self.dataPrediction[:-4]+"-predictions.csv"
+            file=open(path,'w')
+            for line in res:
+                file.write(line)
+                file.write("\n")
+            file.close()
+            self.donePred()
+        
+        else:
+            self.missingFiles()
         
         
     
