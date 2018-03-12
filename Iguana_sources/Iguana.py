@@ -8,7 +8,7 @@ Created on Wed Nov 15 22:57:38 2017
 #importation des modules nécessaires à l'application 
 import sys
 import os
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from py2cytoscape.data.cyrest_client import CyRestClient
 import psutil
 import networkx as nx
@@ -61,6 +61,12 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         super(Pappl, self).__init__()
         self.setupUi(self)
         self.connectActions()
+        self.setWindowFlags(QtCore.Qt.Window |
+        QtCore.Qt.CustomizeWindowHint |
+        QtCore.Qt.WindowTitleHint |
+        QtCore.Qt.WindowCloseButtonHint |
+        QtCore.Qt.WindowStaysOnTopHint |
+        QtCore.Qt.WindowContextHelpButtonHint)
         
     #fonction permettant de lier les boutons de l'interface avec les fonctions correspondantes
     def connectActions(self):

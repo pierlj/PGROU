@@ -16,7 +16,7 @@ base = None
 
 executables = [Executable("Iguana.py", base=base, icon = "C:\\Users\\Jules\\Desktop\\pappl-master\\Iguane.ico")]
 
-packages = ['PyQt5.QtWidgets','PyQt5.QtGui','PyQt5.QtCore','sys','os','py2cytoscape.data.cyrest_client','psutil','networkx','numpy','igraph']
+packages = ['PyQt5.QtWidgets','PyQt5.QtGui','PyQt5.QtCore','sys','os','py2cytoscape.data.cyrest_client','psutil','networkx','numpy','igraph','re','xgboost','sklearn']
 files = ['optimizationComponent.lp','clingo.exe','interface_ui.py','componentIdentification.py','processASP.py', 'Iguane.ico']
 options = {
     'build_exe': {
