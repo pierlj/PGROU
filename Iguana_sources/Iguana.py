@@ -65,7 +65,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         QtCore.Qt.CustomizeWindowHint |
         QtCore.Qt.WindowTitleHint |
         QtCore.Qt.WindowCloseButtonHint |
-        QtCore.Qt.WindowStaysOnTopHint |
+        #QtCore.Qt.WindowStaysOnTopHint |
         QtCore.Qt.WindowContextHelpButtonHint)
         
     #fonction permettant de lier les boutons de l'interface avec les fonctions correspondantes
@@ -1356,7 +1356,16 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
     def grapheSimilarite(self, rfile):
         resultFile = open(rfile,'r')
-        strings = resultFile.readline().split(' ')
+        
+        strings=[]
+        
+        lines=resultFile.readlines()
+        for line in lines:
+            temp=line.split(' ')
+            
+            if temp[0]==self.nomPatient.toPlainText():
+                strings=temp.copy()
+                
         patientName = strings[0]
         similVector = strings[1:-1]
         resultFile.close()
@@ -1383,7 +1392,15 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         fileGraphe.close()
         
         resultFile = open(rfile,'r')
-        strings = resultFile.readline().split(' ')
+        strings=[]
+        
+        lines=resultFile.readlines()
+        for line in lines:
+            temp=line.split(' ')
+            
+            if temp[0]==self.nomPatient.toPlainText():
+                strings=temp.copy()
+                
         patientName = strings[0]
         similVector = strings[1:-1]
         resultFile.close()
@@ -1497,8 +1514,10 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
     def modifyDisplayGraphState(self):
         self.afficherGraph.setEnabled(self.graphSimi.isChecked())
+        self.nomPatient.setEnabled(self.graphSimi.isChecked())
         if (not self.graphSimi.isChecked()):
             self.afficherGraph.setChecked(False)
+            self.nomPatient.setText("")
         
     def modifyButtonClinique(self):
         self.buttonClinique.setEnabled(not self.dataPred.isChecked())
@@ -1575,6 +1594,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             os.remove(pathtest)
             
             if (self.graphSimi.isChecked()):
+                print("Name: "+rfile)
                 [fileURL, hashMap] = self.grapheSimilarite(rfile)
                 if (self.afficherGraph.isChecked()):
                     self.displayGrapheSimilarite(fileURL, hashMap)
