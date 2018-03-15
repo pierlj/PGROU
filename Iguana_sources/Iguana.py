@@ -261,7 +261,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
     #chargement des graphes en ouvrant un explorateur de fichier
     def loading(self):
-        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.sif')
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.sif')
         if (len(nom[0])>0):
             self.grapheLoc.append(nom[0])
             self.grapheLoc2.append(nom[0])
@@ -381,7 +381,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
     def loadingDataTrain(self):
         print("loadTrain")
-        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.csv')
         if (len(nom[0])>0):
             
             self.dataTrain=nom[0]
@@ -457,7 +457,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
     
     def loadDataPred(self):
-        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.csv')
         self.dataPrediction=nom[0]
         if (len(nom[0])>0):
             self.patients.clear()
@@ -467,7 +467,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
     def loadingDataTest(self):
         print("loadTest")
-        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', "C:\\", '*.csv')
+        nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.csv')
         if (len(nom[0])>0):
             self.dataTest.append(nom[0])
             
