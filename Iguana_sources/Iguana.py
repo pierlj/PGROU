@@ -1146,6 +1146,10 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         # Affichage des tuples
         #for tuple in listeTuples:
         #	print(tuple) 
+        file=open(os.path.splitext(self.grapheLoc2[self.graph_3.currentRow()])[0]+"-composants.csv",'w')
+        for line in listeTuples:
+            file.write(line+'\n')
+        file.close()
         file=open(os.path.splitext(self.grapheLoc2[self.graph_3.currentRow()])[0]+"-coloration-table.csv",'w')
         tableTuple=[]
         for i in range(len(listeTuples)):
@@ -1443,10 +1447,8 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                                 nodeAlone[j] = False
             grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
                                     
-            dir = dir_path[:-15] + "\\Data"
+            dir = os.path.dirname(rfile)
             
-            if not os.path.exists(dir):
-                os.makedirs(dir)
             
             fileGrapheSimilURL = dir + "\\Graphe_" + patientName + ".sif"
             fileGrapheSimil = open(fileGrapheSimilURL, 'w')
@@ -1550,9 +1552,11 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     def runSimilAlgorithm(self):
         #On vérifie que l'utilisateur a bien sélectionné les informations demandées
         if self.similIsRunnable():
-            rfile = dir_path + '\\resultat_' + self.patientsDatasForSimilDirURL.split("/")[-1] + '.csv'
+            rfile = os.path.dirname(self.patientsDatasForSimilDirURL) + '\\resultat_' + self.patientsDatasForSimilDirURL.split("/")[-1] + '.csv'
             results=open(rfile,'w')
+            
             #Traitement des données
+            print(rfile)
             for i in os.listdir(self.patientsDatasForSimilDirURL):
                 
                 #Ouverture du fichier et affichage
@@ -1582,7 +1586,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                 # et faire des mini-traitements
                 # puis faire pareil sur l'autre dossier
                 pathtest=dir_path+ '\\' + 'testpython'
-                self.computing(self.patientsDatasForSimilDirURL + '\\' + i,dir_path + "\\components.csv",pathtest)
+                self.computing(self.patientsDatasForSimilDirURL + '\\' + i,self.componentsFileURL[0],pathtest)
                 ftest=open(pathtest,'r')
                 
                 clinique = ""
