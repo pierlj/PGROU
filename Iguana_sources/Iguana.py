@@ -251,6 +251,18 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         dialog.layout.addWidget(ok, 1, 1)
         dialog.exec_()
     
+    def wrongPatient(self):
+        msglabel = QtWidgets.QLabel("\tAttention : le patient recherché n'existe pas.\t\n \tVeuillez réessayer avec un autre nom.\t")
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle("Attention")
+        ok = QtWidgets.QPushButton('OK', dialog)
+        ok.clicked.connect(dialog.accept)
+        ok.setDefault(True)
+        dialog.layout = QtWidgets.QGridLayout(dialog)
+        dialog.layout.addWidget(msglabel, 0, 0, 1, 3)
+        dialog.layout.addWidget(ok, 1, 1)
+        dialog.exec_()
+    
     #fonction determinant si Cytoscape est lancé
     def isRunning(s):
         for pid in psutil.pids():
@@ -1365,90 +1377,93 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
             if temp[0]==self.nomPatient.toPlainText():
                 strings=temp.copy()
-                
-        patientName = strings[0]
-        similVector = strings[1:-1]
-        resultFile.close()
-        
-        fileComponents = open(self.componentsFileURL[0], 'r')
-        hashMap = {}
-        n = 0
-        listeComposantes = []
-        for line in fileComponents:
-            if line != '\n':
-                composante = line.split(',')
-                for i in range (len(composante)):
-                    if (i == len(composante) - 1):
-                        composante[i] = composante[i][:-3]
-                    else:
-                        composante[i] = composante[i][:-2]
-                listeComposantes.append(composante)
-                n += 1
-                hashMap["NOEUD" + str(n)] = similVector[n-1]
-        fileComponents.close()
-                
-        fileGraphe = open(self.grapheGenesFileURL[0],'r')
-        base = fileGraphe.readlines()
-        fileGraphe.close()
-        
-        resultFile = open(rfile,'r')
-        strings=[]
-        
-        lines=resultFile.readlines()
-        for line in lines:
-            temp=line.split(' ')
+        if strings != []:
+            patientName = strings[0]
+            similVector = strings[1:-1]
+            resultFile.close()
             
-            if temp[0]==self.nomPatient.toPlainText():
-                strings=temp.copy()
+            fileComponents = open(self.componentsFileURL[0], 'r')
+            hashMap = {}
+            n = 0
+            listeComposantes = []
+            for line in fileComponents:
+                if line != '\n':
+                    composante = line.split(',')
+                    for i in range (len(composante)):
+                        if (i == len(composante) - 1):
+                            composante[i] = composante[i][:-3]
+                        else:
+                            composante[i] = composante[i][:-2]
+                    listeComposantes.append(composante)
+                    n += 1
+                    hashMap["NOEUD" + str(n)] = similVector[n-1]
+            fileComponents.close()
+                    
+            fileGraphe = open(self.grapheGenesFileURL[0],'r')
+            base = fileGraphe.readlines()
+            fileGraphe.close()
+            
+            resultFile = open(rfile,'r')
+            strings=[]
+            
+            lines=resultFile.readlines()
+            for line in lines:
+                temp=line.split(' ')
                 
-        patientName = strings[0]
-        similVector = strings[1:-1]
-        resultFile.close()
-        
-        grapheComposantes=[]
-        nodeAlone = [True for _ in range(n)]
-        
-        for i in range(n):
-            composante1 = listeComposantes[i]
-            for j in range(i+1,n):
-                composante2 = listeComposantes[j]
-                for line in base:
-                    lineSliced = line[:-1]
-                    edge = lineSliced.split("\t")
-                        
-                    if (edge[0] in composante1 and edge[2] in composante2):
-                        arc = "NOEUD" + str(i+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(j+1) + "\n"
-                        if arc not in grapheComposantes:
-                            grapheComposantes.append(arc)
-                            nodeAlone[i] = False
-                            nodeAlone[j] = False
+                if temp[0]==self.nomPatient.toPlainText():
+                    strings=temp.copy()
+                    
+            patientName = strings[0]
+            similVector = strings[1:-1]
+            resultFile.close()
+            
+            grapheComposantes=[]
+            nodeAlone = [True for _ in range(n)]
+            
+            for i in range(n):
+                composante1 = listeComposantes[i]
+                for j in range(i+1,n):
+                    composante2 = listeComposantes[j]
+                    for line in base:
+                        lineSliced = line[:-1]
+                        edge = lineSliced.split("\t")
                             
-                    if (edge[2] in composante1 and edge[0] in composante2):
-                        arc = "NOEUD" + str(j+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(i+1) + "\n"
-                        if arc not in grapheComposantes:
-                            grapheComposantes.append(arc)
-                            nodeAlone[i] = False
-                            nodeAlone[j] = False
-        grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
+                        if (edge[0] in composante1 and edge[2] in composante2):
+                            arc = "NOEUD" + str(i+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(j+1) + "\n"
+                            if arc not in grapheComposantes:
+                                grapheComposantes.append(arc)
+                                nodeAlone[i] = False
+                                nodeAlone[j] = False
                                 
-        dir = dir_path[:-15] + "\\Data"
-        
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        
-        fileGrapheSimilURL = dir + "\\Graphe_" + patientName + ".sif"
-        fileGrapheSimil = open(fileGrapheSimilURL, 'w')
-        print(fileGrapheSimilURL)
-        for arc in grapheComposantes:
-            fileGrapheSimil.write(arc)
+                        if (edge[2] in composante1 and edge[0] in composante2):
+                            arc = "NOEUD" + str(j+1) + "\t" + edge[1] + "\t" + "NOEUD" + str(i+1) + "\n"
+                            if arc not in grapheComposantes:
+                                grapheComposantes.append(arc)
+                                nodeAlone[i] = False
+                                nodeAlone[j] = False
+            grapheComposantes = sorted(grapheComposantes, key = lambda composante: int(composante.split("\t")[0][5:]))
+                                    
+            dir = dir_path[:-15] + "\\Data"
             
-        for i in range(n):
-            if nodeAlone[i] == True:
-                fileGrapheSimil.write("NOEUD" + str(i+1) + "\n")
+            if not os.path.exists(dir):
+                os.makedirs(dir)
             
-        fileGrapheSimil.close()
-        
-        return [fileGrapheSimilURL, hashMap]
+            fileGrapheSimilURL = dir + "\\Graphe_" + patientName + ".sif"
+            fileGrapheSimil = open(fileGrapheSimilURL, 'w')
+            print(fileGrapheSimilURL)
+            for arc in grapheComposantes:
+                fileGrapheSimil.write(arc)
+                
+            for i in range(n):
+                if nodeAlone[i] == True:
+                    fileGrapheSimil.write("NOEUD" + str(i+1) + "\n")
+                
+            fileGrapheSimil.close()
+            
+            return [fileGrapheSimilURL, hashMap]
+        else:
+            self.wrongPatient()
+            return ["error",{}]
 
     def displayGrapheSimilarite(self, grapheURL, hashMap):
         if not self.isRunning():
@@ -1596,7 +1611,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             if (self.graphSimi.isChecked()):
                 print("Name: "+rfile)
                 [fileURL, hashMap] = self.grapheSimilarite(rfile)
-                if (self.afficherGraph.isChecked()):
+                if (self.afficherGraph.isChecked() and fileURL != "error"):
                     self.displayGrapheSimilarite(fileURL, hashMap)
             
             self.doneSimil()
