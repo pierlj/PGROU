@@ -2,7 +2,7 @@
 """
 Created on Wed Nov 15 22:57:38 2017
 
-@author: Jules Paris et Pierre Le Jeune and Khalil la folle and Romano
+@author: Khalil Boukenafet, Pierre Le Jeune, Jules Paris and Justin Voinéa
 """
 
 #importation des modules nécessaires à l'application 
