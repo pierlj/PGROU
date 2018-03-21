@@ -14,14 +14,17 @@ os.environ['TK_LIBRARY'] = "D:\\WinPython-64bit-3.5.3.1Qt5\\python-3.5.3.amd64\\
 base = None
 
 
-executables = [Executable("Iguana.py", base=base, icon = "C:\\Users\\Jules\\Desktop\\pappl-master\\Iguane.ico")]
+executables = [Executable("Iguana.py", base=base, icon = "C:\\Users\\Jules\\Desktop\\Iguana_sources\\Iguane.ico")]
 
-packages = ['PyQt5.QtWidgets','PyQt5.QtGui','PyQt5.QtCore','sys','os','py2cytoscape.data.cyrest_client','psutil','networkx','numpy','igraph','re','xgboost','sklearn']
-files = ['optimizationComponent.lp','clingo.exe','interface_ui.py','componentIdentification.py','processASP.py', 'Iguane.ico']
+packages = ['scipy','PyQt5.QtWidgets','PyQt5.QtGui','PyQt5.QtCore','sys','os','py2cytoscape.data.cyrest_client','psutil','networkx','pandas','numpy','igraph','sklearn','re','xgboost','random']
+files = ['optimizationComponent.lp','clingo.exe','interface_ui.py', 'Iguane.ico']
+add = ['scipy.sparse.csgraph._shortest_path']
+
 options = {
     'build_exe': {
         'packages':packages,
         "include_files": files,
+        'includes':add
     },
 
 }
@@ -29,7 +32,7 @@ options = {
 setup(
     name = "Iguana",
     options = options,
-    version = "2.4",
+    version = "3.0",
     description = 'Iguana (feat. iggy-POC)',
     executables = executables
 )
