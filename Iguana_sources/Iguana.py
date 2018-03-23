@@ -396,7 +396,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         
         
     def loadingDataTrain(self):
-        print("loadTrain")
+        
         nom=QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', dir_path + '\\', '*.csv')
         if (len(nom[0])>0):
             
@@ -409,10 +409,10 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     
     def importData(self,chemin):
         path=chemin.replace('\\','\\\\')
-        print(chemin)
+        
         file=open(chemin,'r')
         data=file.readlines()
-        print(len(data))
+        
         names=[]
         X=[]
         y=[]

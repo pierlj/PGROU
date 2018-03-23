@@ -38,12 +38,13 @@ print(numpy.mean(mean1))
 print(numpy.linalg.norm(mean1-mean2))
 print(numpy.linalg.norm(var1-var2))
 
-x_axis = numpy.arange(0.4, 0.7, 0.001)
+x_axis = numpy.arange(0.4, 0.9, 0.001)
 # Mean = 0, SD = 2.
 for i in range(30):
     plt.figure()
     ax=plt.gca()
     ax.autoscale(enable=True)
-    plt.plot(x_axis, norm.pdf(x_axis,mean1[i],var1[i]))
-    plt.plot(x_axis, norm.pdf(x_axis,mean2[i],var2[i]))
+    plt.plot(x_axis, norm.pdf(x_axis,mean1[i],var1[i]), label="Jeu n°1")
+    plt.plot(x_axis, norm.pdf(x_axis,mean2[i],var2[i]),  label="Jeu n°2")
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.show()
