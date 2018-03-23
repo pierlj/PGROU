@@ -379,7 +379,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             (p,matrix)=self.validation(features,labels)
             self.fichier.setText(os.path.basename(path))
             self.precision.setText(str('{:01.2f}'.format(p)))
-            self.matrice.setText("\tPositive\tNegative\nPositive\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nNegative\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
+            self.matrice.setText("\tNegative\tPositive\nNegative\t"+str(matrix[0][0])+"\t"+str(matrix[0][1])+"\nPositive\t"+str(matrix[1][0])+"\t"+str(matrix[1][1]))
         else:
             self.missingTestFiles()
         
