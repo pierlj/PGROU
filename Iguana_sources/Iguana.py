@@ -20,6 +20,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import random
 
+
+
 #import du fichier génrant l'interface graphique
 import interface_ui
 
@@ -384,8 +386,10 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
     def validation(self,X,y):
         #print("Prediction:")
         pred=self.clf[self.comboBox.currentIndex()].predict(X)
-        confusionMatrix=confusion_matrix(pred,y)
-        #print(confusionMatrix)
+        
+        confusionMatrix=confusion_matrix(y,pred)
+        
+        
         precision=sum(numpy.diagonal(confusionMatrix))/sum(sum(confusionMatrix))
         return (precision,confusionMatrix) 
         
@@ -408,6 +412,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
         print(chemin)
         file=open(chemin,'r')
         data=file.readlines()
+        print(len(data))
         names=[]
         X=[]
         y=[]
@@ -1381,6 +1386,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
             if temp[0]==self.nomPatient.toPlainText():
                 strings=temp.copy()
+            print(temp)
         if strings != []:
             patientName = strings[0]
             similVector = strings[1:-1]
@@ -1597,14 +1603,14 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
                             clinique=line.split(',')[1]
                     cl.close()
                 
-
-                if clinique!="CENSORED":
-                    for line in ftest:
+                for line in ftest:
+                    if clinique!="CENSORED\n":
                         results.write(line)
-                    if (not self.dataPred.isChecked()):
-                        results.write(" "+clinique)
-                    else:
-                        results.write("\n")
+                        if (not self.dataPred.isChecked()):
+                            
+                            results.write(" "+clinique)
+                        else:
+                            results.write("\n")
                 ftest.close()
                 
                 

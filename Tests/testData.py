@@ -1,5 +1,7 @@
 from sklearn.preprocessing import StandardScaler
 import numpy
+import matplotlib.pyplot as plt
+from scipy.stats import norm
 
 def importData(chemin):
     file=open(chemin,'r')
@@ -32,6 +34,16 @@ scaler.fit(X2)
 mean2=scaler.mean_
 var2=scaler.var_
 
-print(mean1-mean2)
+print(numpy.mean(mean1))
 print(numpy.linalg.norm(mean1-mean2))
 print(numpy.linalg.norm(var1-var2))
+
+x_axis = numpy.arange(0.4, 0.7, 0.001)
+# Mean = 0, SD = 2.
+for i in range(30):
+    plt.figure()
+    ax=plt.gca()
+    ax.autoscale(enable=True)
+    plt.plot(x_axis, norm.pdf(x_axis,mean1[i],var1[i]))
+    plt.plot(x_axis, norm.pdf(x_axis,mean2[i],var2[i]))
+    plt.show()
