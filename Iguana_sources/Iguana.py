@@ -359,7 +359,7 @@ class Pappl(QtWidgets.QWidget, interface_ui.Ui_Form):
             
                 accuracy = accuracy_score(y_test, y_pred)
                 r.append(accuracy)
-            
+            model.fit(self.trainFeatures, self.trainLabels)
             self.clf.append(model)
             if (not self.test.isEnabled()):
                 self.comboBox.clear()
