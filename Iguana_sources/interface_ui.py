@@ -377,7 +377,7 @@ class Ui_Form(object):
         self.classificateurPred.addItem("")
         self.gridLayout_4.addWidget(self.classificateurPred, 3, 0, 1, 1)
         self.lancer = QtWidgets.QPushButton(self.tab_6)
-        self.lancer.setMaximumSize(QtCore.QSize(60, 16777215))
+        self.lancer.setMaximumSize(QtCore.QSize(80, 16777215))
         self.lancer.setObjectName("lancer")
         self.gridLayout_4.addWidget(self.lancer, 6, 0, 1, 2, QtCore.Qt.AlignHCenter)
         spacerItem12 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
